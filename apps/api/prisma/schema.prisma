@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum DecisionStatus {
+  DRAFT
+  SUBMISSION_OPEN
+  LOCKED_PROCESSING
+  REVEAL_READY
+  DISCUSSION
+  VOTING
+  CLOSED
+}
+
+enum ParticipantRole {
+  owner
+  contributor
+  observer
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  name         String
+  passwordHash String
+  role         String        @default("user")
+  createdAt    DateTime      @default(now())
+  participants Participant[]
+  submissions  Submission[]
+  auditLogs    AuditLog[]
+  decisions    Decision[]    @relation("CreatedDecisions")
+}
+
+model Decision {
+  id            String         @id @default(uuid())
+  creatorId     String
+  title         String
+  contextPrompt String?
+  status        DecisionStatus @default(DRAFT)
+  deadline      DateTime?
+  createdAt     DateTime       @default(now())
+  creator       User           @relation("CreatedDecisions", fields: [creatorId], references: [id])
+  participants  Participant[]
+  submissions   Submission[]
+}
+
+model Participant {
+  decisionId   String
+  userId       String
+  role         ParticipantRole
+  hasSubmitted Boolean         @default(false)
+  decision     Decision        @relation(fields: [decisionId], references: [id])
+  user         User            @relation(fields: [userId], references: [id])
+
+  @@id([decisionId, userId])
+}
+
+model Submission {
+  id              String   @id @default(uuid())
+  decisionId      String
+  userId          String
+  rawReasoning    String
+  confidenceScore Int
+  isLocked        Boolean  @default(false)
+  submittedAt     DateTime @default(now())
+  decision        Decision @relation(fields: [decisionId], references: [id])
+  user            User     @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  entityId  String
+  actorId   String
+  action    String
+  metadata  Json
+  timestamp DateTime @default(now())
+  actor     User     @relation(fields: [actorId], references: [id])
+}

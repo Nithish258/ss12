@@ -37,6 +37,15 @@ describe('DecisionsService', () => {
     const result = await service.create({ title: 'Test' }, 'u1');
     expect(result.id).toBe('d1');
     expect(mockPrisma.decision.create).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.decision.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          participants: {
+            create: { userId: 'u1', role: 'owner' },
+          },
+        }),
+      })
+    );
   });
 
   it('should throw NotFoundException for unknown decision', async () => {

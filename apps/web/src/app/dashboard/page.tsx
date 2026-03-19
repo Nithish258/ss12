@@ -57,8 +57,10 @@ export default async function DashboardPage() {
 
         {decisions.length === 0 && !fetchError ? (
           <div className="empty-state">
-            <p>No decisions yet.</p>
-            <p>Create your first decision to get started.</p>
+            <div className="empty-state-icon">🧠</div>
+            <h3>No decisions yet</h3>
+            <p>Create your first decision to start collaborating with your team.</p>
+            <p>Use the API or Swagger docs to get started.</p>
           </div>
         ) : (
           <div className="decisions-grid">

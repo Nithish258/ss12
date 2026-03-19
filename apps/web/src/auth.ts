@@ -20,9 +20,7 @@ declare module 'next-auth' {
     name: string;
     role: string;
   }
-}
 
-declare module 'next-auth/jwt' {
   interface JWT {
     accessToken?: string;
     id?: string;
@@ -31,6 +29,7 @@ declare module 'next-auth/jwt' {
     role?: string;
   }
 }
+
 
 function parseJwt(token: string) {
   const base64Url = token.split('.')[1];
@@ -89,17 +88,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return token;
     },
-    async session({ session, token }) {
-      session.accessToken = token.accessToken;
+    async session({ session, token }): Promise<any> {
+      (session as any).accessToken = token.accessToken;
       session.user = {
         id: token.id as string,
         email: token.email as string,
         name: token.name as string,
         role: token.role as string,
-      };
+      } as any;
       return session;
     },
   },
+
   pages: {
     signIn: '/login',
   },

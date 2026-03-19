@@ -65,7 +65,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               accessToken: res.access_token,
               id: payload.sub,
               email: payload.email,
-              name: payload.email, // Will be overridden if we fetch profile
+              name: payload.name, // Will be overridden if we fetch profile
               role: payload.role,
             };
           }

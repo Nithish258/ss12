@@ -5,6 +5,13 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('FATAL: JWT_SECRET environment variable is not set.');
+  }
+  if (!process.env.DATABASE_URL) {
+    throw new Error('FATAL: DATABASE_URL environment variable is not set.');
+  }
+
   const app = await NestFactory.create(AppModule);
 
   // Security headers

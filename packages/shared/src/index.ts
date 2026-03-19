@@ -42,3 +42,14 @@ export const UpdateDecisionDtoSchema = z.object({
 });
 
 export type UpdateDecisionDto = z.infer<typeof UpdateDecisionDtoSchema>;
+
+export const RegisterSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email address'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, 
+      'Must contain uppercase, lowercase, and a number'),
+});
+
+export type RegisterInput = z.infer<typeof RegisterSchema>;

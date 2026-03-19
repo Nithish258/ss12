@@ -54,6 +54,9 @@ model Decision {
   creator       User           @relation("CreatedDecisions", fields: [creatorId], references: [id])
   participants  Participant[]
   submissions   Submission[]
+
+  @@index([creatorId])
+  @@index([status])
 }
 
 model Participant {
@@ -65,6 +68,7 @@ model Participant {
   user         User            @relation(fields: [userId], references: [id])
 
   @@id([decisionId, userId])
+  @@index([userId])
 }
 
 model Submission {
@@ -77,6 +81,10 @@ model Submission {
   submittedAt     DateTime @default(now())
   decision        Decision @relation(fields: [decisionId], references: [id])
   user            User     @relation(fields: [userId], references: [id])
+
+  @@index([decisionId])
+  @@index([userId])
+  @@unique([decisionId, userId])
 }
 
 model AuditLog {
@@ -87,4 +95,8 @@ model AuditLog {
   metadata  Json
   timestamp DateTime @default(now())
   actor     User     @relation(fields: [actorId], references: [id])
+
+  @@index([entityId])
+  @@index([actorId])
+  @@index([timestamp])
 }

@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { RegisterSchema } from '@quaicu/shared';
+import { apiClient } from '@/lib/api';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,17 +21,19 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Register with the API
-      const res = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+      // Client-side validation
+      const validation = RegisterSchema.safeParse({ name, email, password });
+      if (!validation.success) {
+        setError(validation.error.errors[0].message);
+        setLoading(false);
+        return;
+      }
+
+      // Register with the API using apiClient
+      await apiClient('/api/v1/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
       });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Registration failed');
-      }
 
       // Auto-login after successful registration
       const result = await signIn('credentials', {
@@ -96,8 +98,11 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              minLength={6}
+              minLength={8}
             />
+            <p className="field-hint" style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+              Min 8 chars, one uppercase, one lowercase, one number
+            </p>
           </div>
 
           <button type="submit" className="btn-primary" disabled={loading}>

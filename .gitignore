@@ -1,7 +1,10 @@
-node_modules
-dist
-.next
-.turbo
-*.tsbuildinfo
+node_modules/
+.next/
+dist/
+venv/
 .env
-.env.local
+.env.*local
+**/__pycache__/
+**/*.pyc
+**/out.txt
+.pytest_cache/

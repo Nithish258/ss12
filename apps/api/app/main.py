@@ -5,7 +5,13 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
 from app.middleware.rate_limit import limiter
-from app.routers import auth, decisions, participants
+from app.routers import auth, decisions, participants, submissions
+from app.routers.websocket import socket_app, get_sio
+from socketio import ASGIApp
+from fastapi import Request
+
+def get_socket(request: Request):
+    return get_sio()
 
 # Startup Checks
 if not settings.JWT_SECRET:
@@ -36,5 +42,6 @@ participants_router = participants.router
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(decisions.router, prefix="/api/v1/decisions", tags=["decisions"])
 app.include_router(participants.router, prefix="/api/v1/decisions/{decision_id}/participants", tags=["participants"])
+app.include_router(submissions.router, prefix="/api/v1/decisions", tags=["submissions"])
 
-
+app.mount("/ws", socket_app)

@@ -77,3 +77,39 @@ async def test_remove_non_participant_404(client: AsyncClient, setup_data):
 
 # note: We test remove\_self\_403, but getting the owner ID requires calling login first.
 # This test verifies it's blocked.
+
+@pytest.mark.asyncio
+async def test_remove_self_403(client: AsyncClient):
+    from jose import jwt
+    import os
+    # Register and login as owner
+    await client.post("/api/v1/auth/register", json={
+        "name": "Self Owner",
+        "email": "selfowner@test.com",
+        "password": "Password123!"
+    })
+    res = await client.post("/api/v1/auth/login", json={
+        "email": "selfowner@test.com",
+        "password": "Password123!"
+    })
+    token = res.json()["access_token"]
+    # Decode token to get owner user_id
+    payload = jwt.decode(
+        token,
+        os.environ.get("JWT_SECRET", "changeme_use_strong_secret_in_prod"),
+        algorithms=["HS256"]
+    )
+    owner_id = payload["sub"]
+    # Create decision
+    d_res = await client.post(
+        "/api/v1/decisions/",
+        json={"title": "Self Remove Test"},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    did = d_res.json()["id"]
+    # Try to remove self
+    response = await client.delete(
+        f"/api/v1/decisions/{did}/participants/{owner_id}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 400

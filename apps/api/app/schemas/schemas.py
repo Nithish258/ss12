@@ -1,5 +1,6 @@
 from typing import Optional, Literal
 from datetime import datetime
+from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, field_validator
 import re
 
@@ -40,3 +41,37 @@ class UpdateDecisionRequest(BaseModel):
 class InviteParticipantRequest(BaseModel):
     email: EmailStr
     role: Literal['owner', 'contributor', 'observer']
+
+class ParticipantResponse(BaseModel):
+    user_id: UUID
+    role: str
+    has_submitted: bool
+
+    model_config = {"from_attributes": True}
+
+class UpsertSubmissionRequest(BaseModel):
+    raw_reasoning: str = Field(min_length=1)
+    confidence_score: int
+
+    @field_validator('confidence_score')
+    @classmethod
+    def validate_confidence(cls, v: int) -> int:
+        if v < 1 or v > 10:
+            raise ValueError('confidence_score must be between 1 and 10')
+        return v
+
+class StateTransitionResponse(BaseModel):
+    decision_id: str
+    old_state: str
+    new_state: str
+
+class SubmissionResponse(BaseModel):
+    id: str
+    decision_id: str
+    user_id: str
+    raw_reasoning: str
+    confidence_score: int
+    is_locked: bool
+    submitted_at: datetime
+
+    model_config = {"from_attributes": True}

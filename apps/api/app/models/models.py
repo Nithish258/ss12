@@ -85,7 +85,7 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     entity_id = Column(UUID(as_uuid=True))
-    actor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    actor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     action = Column(String, nullable=False)
     metadata_json = Column("metadata", JSON, nullable=False)  # mapped to metadata column
     timestamp = Column(DateTime, default=datetime.utcnow)

@@ -1,6 +1,7 @@
 from typing import Optional, Literal
 from datetime import datetime
 from uuid import UUID
+import uuid
 from pydantic import BaseModel, EmailStr, Field, field_validator
 import re
 
@@ -66,9 +67,9 @@ class StateTransitionResponse(BaseModel):
     new_state: str
 
 class SubmissionResponse(BaseModel):
-    id: str
-    decision_id: str
-    user_id: str
+    id: uuid.UUID
+    decision_id: uuid.UUID
+    user_id: uuid.UUID
     raw_reasoning: str
     confidence_score: int
     is_locked: bool

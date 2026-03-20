@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from fastapi import HTTPException
-from app.models.models import Decision, Participant, AuditLog
+from app.models.models import Decision, Participant, AuditLog, Submission
 import uuid
 
 VALID_TRANSITIONS = {
@@ -113,8 +113,12 @@ async def check_and_auto_lock(
         
         # Enqueue AI Jobs
         from app.workers.ai_worker import enqueue_synthesis, enqueue_extraction
-        # Actually enqueue extraction happens per submission, 
-        # enqueue synthesis happens when locked.
+        
+        # Enqueue extraction for all submissions in this decision
+        sub_res = await db.execute(select(Submission).filter(Submission.decision_id == did))
+        for sub in sub_res.scalars().all():
+            await enqueue_extraction(str(sub.id))
+            
         await enqueue_synthesis(str(decision_id))
         return True
         

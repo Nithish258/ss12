@@ -1,8 +1,5 @@
-venv/
-.env
+pip_log.txt
+out.txt
+.pytest_cache/
 __pycache__/
 *.pyc
-.pytest_cache/
-test_results.txt
-drop.py
-wipe_db.py

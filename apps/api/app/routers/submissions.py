@@ -36,35 +36,72 @@ async def list_submissions(
 @router.post("/{decision_id}/open", response_model=StateTransitionResponse)
 async def state_open(decision_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user), sio = Depends(get_socket)):
     await verify_owner(db, decision_id, current_user.id)
+    # Fetch current state for response metadata
+    from app.models.models import Decision
+    import uuid
+    res = await db.execute(select(Decision).filter(Decision.id == uuid.UUID(decision_id)))
+    d_obj = res.scalars().first()
+    old_status = d_obj.status if d_obj else "UNKNOWN"
+    
     d = await transition_state(db, decision_id, "SUBMISSION_OPEN", str(current_user.id), sio)
-    return StateTransitionResponse(decision_id=str(d.id), old_state="DRAFT", new_state="SUBMISSION_OPEN")
+    return StateTransitionResponse(decision_id=str(d.id), old_state=old_status, new_state="SUBMISSION_OPEN")
 
 @router.post("/{decision_id}/lock", response_model=StateTransitionResponse)
 async def state_lock(decision_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user), sio = Depends(get_socket)):
     await verify_owner(db, decision_id, current_user.id)
+    from app.models.models import Decision
+    import uuid
+    res = await db.execute(select(Decision).filter(Decision.id == uuid.UUID(decision_id)))
+    d_obj = res.scalars().first()
+    old_status = d_obj.status if d_obj else "UNKNOWN"
+
     d = await transition_state(db, decision_id, "LOCKED_PROCESSING", str(current_user.id), sio)
-    return StateTransitionResponse(decision_id=str(d.id), old_state="SUBMISSION_OPEN", new_state="LOCKED_PROCESSING")
+    return StateTransitionResponse(decision_id=str(d.id), old_state=old_status, new_state="LOCKED_PROCESSING")
 
 @router.post("/{decision_id}/reveal", response_model=StateTransitionResponse)
 async def state_reveal(decision_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user), sio = Depends(get_socket)):
     await verify_owner(db, decision_id, current_user.id)
+    from app.models.models import Decision
+    import uuid
+    res = await db.execute(select(Decision).filter(Decision.id == uuid.UUID(decision_id)))
+    d_obj = res.scalars().first()
+    old_status = d_obj.status if d_obj else "UNKNOWN"
+
     d = await transition_state(db, decision_id, "REVEAL_READY", str(current_user.id), sio)
-    return StateTransitionResponse(decision_id=str(d.id), old_state="LOCKED_PROCESSING", new_state="REVEAL_READY")
+    return StateTransitionResponse(decision_id=str(d.id), old_state=old_status, new_state="REVEAL_READY")
 
 @router.post("/{decision_id}/discuss", response_model=StateTransitionResponse)
 async def state_discuss(decision_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user), sio = Depends(get_socket)):
     await verify_owner(db, decision_id, current_user.id)
+    from app.models.models import Decision
+    import uuid
+    res = await db.execute(select(Decision).filter(Decision.id == uuid.UUID(decision_id)))
+    d_obj = res.scalars().first()
+    old_status = d_obj.status if d_obj else "UNKNOWN"
+
     d = await transition_state(db, decision_id, "DISCUSSION", str(current_user.id), sio)
-    return StateTransitionResponse(decision_id=str(d.id), old_state="REVEAL_READY", new_state="DISCUSSION")
+    return StateTransitionResponse(decision_id=str(d.id), old_state=old_status, new_state="DISCUSSION")
 
 @router.post("/{decision_id}/vote", response_model=StateTransitionResponse)
 async def state_vote(decision_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user), sio = Depends(get_socket)):
     await verify_owner(db, decision_id, current_user.id)
+    from app.models.models import Decision
+    import uuid
+    res = await db.execute(select(Decision).filter(Decision.id == uuid.UUID(decision_id)))
+    d_obj = res.scalars().first()
+    old_status = d_obj.status if d_obj else "UNKNOWN"
+
     d = await transition_state(db, decision_id, "VOTING", str(current_user.id), sio)
-    return StateTransitionResponse(decision_id=str(d.id), old_state="DISCUSSION", new_state="VOTING")
+    return StateTransitionResponse(decision_id=str(d.id), old_state=old_status, new_state="VOTING")
 
 @router.post("/{decision_id}/close", response_model=StateTransitionResponse)
 async def state_close(decision_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user), sio = Depends(get_socket)):
     await verify_owner(db, decision_id, current_user.id)
+    from app.models.models import Decision
+    import uuid
+    res = await db.execute(select(Decision).filter(Decision.id == uuid.UUID(decision_id)))
+    d_obj = res.scalars().first()
+    old_status = d_obj.status if d_obj else "UNKNOWN"
+
     d = await transition_state(db, decision_id, "CLOSED", str(current_user.id), sio)
-    return StateTransitionResponse(decision_id=str(d.id), old_state="VOTING", new_state="CLOSED")
+    return StateTransitionResponse(decision_id=str(d.id), old_state=old_status, new_state="CLOSED")

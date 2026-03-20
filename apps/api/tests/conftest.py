@@ -21,7 +21,7 @@ class TestClient(AsyncClient):
         kwargs["headers"] = headers
         return await super().request(method, url, **kwargs)
 
-engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=pool.NullPool)
+engine = create_async_engine(TEST_DATABASE_URL, echo=True, poolclass=pool.NullPool)
 TestingSessionLocal = async_sessionmaker(
     bind=engine, class_=AsyncSession, expire_on_commit=False, autoflush=False
 )
@@ -34,11 +34,11 @@ app.dependency_overrides[get_db] = override_get_db
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # async with engine.begin() as conn:
+    #     await conn.run_sync(Base.metadata.create_all)
     yield
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    # async with engine.begin() as conn:
+    #     await conn.run_sync(Base.metadata.drop_all)
 
 @pytest_asyncio.fixture
 async def db_session():

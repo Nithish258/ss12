@@ -55,9 +55,11 @@ async def upsert_submission(
     submission = sub_res.scalars().first()
     
     if submission:
+        existing = True
         submission.raw_reasoning = raw_reasoning
         submission.confidence_score = dto.confidence_score
     else:
+        existing = False
         submission = Submission(
             decision_id=did,
             user_id=current_user.id,
@@ -72,17 +74,16 @@ async def upsert_submission(
         entity_id=did,
         actor_id=current_user.id,
         action="SUBMISSION_UPSERTED",
-        metadata_json={}
+        metadata_json={
+            "confidence_score": dto.confidence_score, 
+            "action": "update" if existing else "create"
+        }
     )
     db.add(audit)
     
     await db.commit()
     await db.refresh(submission)
     
-    # Phase 1 extraction
-    from app.workers.ai_worker import enqueue_extraction
-    await enqueue_extraction(str(submission.id))
-
     if sio is not None:
         await sio.emit(
             "participant_status_change",

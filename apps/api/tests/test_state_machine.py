@@ -66,5 +66,6 @@ async def test_all_submitted_triggers_auto_lock(client: AsyncClient, auth_token:
     import uuid
     import asyncio
     
+    await db_session.expire_all()
     db_dec = (await db_session.execute(select(Decision).filter(Decision.id == uuid.UUID(did)))).scalars().first()
     assert db_dec.status == "LOCKED_PROCESSING"

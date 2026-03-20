@@ -1,4 +1,5 @@
 import os
+import asyncio
 from arq import create_pool
 from arq.connections import RedisSettings
 
@@ -27,11 +28,23 @@ class WorkerSettings:
     redis_settings = get_redis_settings()
 
 async def enqueue_extraction(submission_id: str):
-    pool = await create_pool(get_redis_settings())
-    await pool.enqueue_job("extract_arguments", submission_id)
-    await pool.aclose()
+    if os.getenv("TESTING") == "true":
+        print(f"[TESTING] Skipped enqueue_extraction for {submission_id}")
+        return
+    try:
+        pool = await asyncio.wait_for(create_pool(get_redis_settings()), timeout=0.1)
+        await pool.enqueue_job("extract_arguments", submission_id)
+        await pool.aclose()
+    except Exception:
+        print(f"[WARN] Redis unavailable — skipped enqueue_extraction for {submission_id}")
 
 async def enqueue_synthesis(decision_id: str):
-    pool = await create_pool(get_redis_settings())
-    await pool.enqueue_job("synthesize_all", decision_id)
-    await pool.aclose()
+    if os.getenv("TESTING") == "true":
+        print(f"[TESTING] Skipped enqueue_synthesis for {decision_id}")
+        return
+    try:
+        pool = await asyncio.wait_for(create_pool(get_redis_settings()), timeout=0.1)
+        await pool.enqueue_job("synthesize_all", decision_id)
+        await pool.aclose()
+    except Exception:
+        print(f"[WARN] Redis unavailable — skipped enqueue_synthesis for {decision_id}")

@@ -1,6 +1,13 @@
 import pytest
 from httpx import AsyncClient
 import pytest_asyncio
+from unittest.mock import patch, AsyncMock
+
+@pytest_asyncio.fixture(autouse=True)
+async def mock_workers():
+    with patch("app.workers.ai_worker.enqueue_extraction", new_callable=AsyncMock) as m1:
+        with patch("app.workers.ai_worker.enqueue_synthesis", new_callable=AsyncMock) as m2:
+            yield m1, m2
 
 @pytest_asyncio.fixture
 async def auth_token(client: AsyncClient):
@@ -84,7 +91,7 @@ async def test_submissions_hidden_before_reveal(client: AsyncClient, auth_token:
     assert len(subs.json()) == 1
 
 @pytest.mark.asyncio
-async def test_submissions_visible_after_reveal(client: AsyncClient, auth_token: str, db_session):
+async def test_submissions_visible_after_reveal(client: AsyncClient, auth_token: str):
     res = await client.post("/api/v1/decisions/", json={"title": "Reveal"}, headers={"Authorization": f"Bearer {auth_token}"})
     did = res.json()["id"]
     await client.post(f"/api/v1/decisions/{did}/open", headers={"Authorization": f"Bearer {auth_token}"})
@@ -102,13 +109,9 @@ async def test_submissions_visible_after_reveal(client: AsyncClient, auth_token:
     await client.post(f"/api/v1/decisions/{did}/submissions", json={"raw_reasoning": "Sub 1", "confidence_score": 5}, headers={"Authorization": f"Bearer {ctoken1}"})
     await client.post(f"/api/v1/decisions/{did}/submissions", json={"raw_reasoning": "Sub 2", "confidence_score": 5}, headers={"Authorization": f"Bearer {ctoken2}"})
 
-    from app.models.models import Decision
-    from sqlalchemy import update
-    import uuid
-    # Wait, if both submit, the state machine auto transitions to LOCKED_PROCESSING!
-    # So we just update to REVEAL_READY
-    await db_session.execute(update(Decision).where(Decision.id == uuid.UUID(did)).values(status="REVEAL_READY"))
-    await db_session.commit()
+    # Both submitted → auto-lock fires → now at LOCKED_PROCESSING
+    # Transition through: LOCKED_PROCESSING → REVEAL_READY
+    await client.post(f"/api/v1/decisions/{did}/reveal", headers={"Authorization": f"Bearer {auth_token}"})
 
     subs = await client.get(f"/api/v1/decisions/{did}/submissions", headers={"Authorization": f"Bearer {ctoken1}"})
     assert len(subs.json()) == 2

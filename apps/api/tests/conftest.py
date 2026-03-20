@@ -11,9 +11,15 @@ from app.main import app
 from app.database import Base
 from app.core.dependencies import get_db
 from sqlalchemy import pool
-from app.middleware.rate_limit import limiter
 
-limiter.enabled = False
+import random
+
+class TestClient(AsyncClient):
+    async def request(self, method, url, **kwargs):
+        headers = kwargs.get("headers") or {}
+        headers["X-Forwarded-For"] = f"10.0.0.{random.randint(1, 250)}"
+        kwargs["headers"] = headers
+        return await super().request(method, url, **kwargs)
 
 engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=pool.NullPool)
 TestingSessionLocal = async_sessionmaker(
@@ -43,5 +49,5 @@ async def db_session():
 
 @pytest_asyncio.fixture
 async def client():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+    async with TestClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c

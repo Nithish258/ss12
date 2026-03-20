@@ -58,7 +58,7 @@ async def remove_participant(db: AsyncSession, decision_id: str, user_id: str, c
         raise HTTPException(status_code=404, detail="Invalid UUID")
 
     if uid == current_user.id:
-        raise HTTPException(status_code=403, detail="Cannot remove self")
+        raise HTTPException(status_code=400, detail="Cannot remove self")
 
     result = await db.execute(select(Decision).filter(Decision.id == did))
     if not result.scalars().first():

@@ -52,11 +52,16 @@ async def test_get_decision_403_if_not_participant(client: AsyncClient):
     assert response.status_code == 403
 
 @pytest.mark.asyncio
-async def test_patch_decision_403_if_not_draft(client: AsyncClient, auth_token: str):
+async def test_patch_decision_403_if_not_draft(client: AsyncClient, auth_token: str, db_session):
     d_res = await client.post("/api/v1/decisions/", json={"title": "Not Draft"}, headers={"Authorization": f"Bearer {auth_token}"})
     did = d_res.json()["id"]
     
-    # We cheat here by assuming we can't patch if it's not draft but by default it IS draft.
-    # We verify that standard PATCH works when it IS draft:
+    from app.models.models import Decision
+    from sqlalchemy import update
+    import uuid
+    
+    await db_session.execute(update(Decision).where(Decision.id == uuid.UUID(did)).values(status="SUBMISSION_OPEN"))
+    await db_session.commit()
+
     patch_res = await client.patch(f"/api/v1/decisions/{did}", json={"title": "Draft Changed"}, headers={"Authorization": f"Bearer {auth_token}"})
-    assert patch_res.status_code == 200
+    assert patch_res.status_code == 403

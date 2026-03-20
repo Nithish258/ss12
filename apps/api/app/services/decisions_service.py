@@ -27,7 +27,7 @@ async def create_decision(db: AsyncSession, dto: CreateDecisionRequest, current_
         entity_id=decision.id,
         actor_id=current_user.id,
         action="DECISION_CREATED",
-        metadata_json={}
+        metadata_json={"title": dto.title}
     )
     db.add(audit)
     await db.commit()
@@ -39,19 +39,27 @@ async def create_decision(db: AsyncSession, dto: CreateDecisionRequest, current_
     )
     return result.scalars().first()
 
+from sqlalchemy import func
+
 async def get_decisions_for_user(db: AsyncSession, current_user: User):
-    result = await db.execute(
-        select(Decision)
+    user_decisions_stmt = select(Participant.decision_id).filter(Participant.user_id == current_user.id)
+    result = await db.execute(user_decisions_stmt)
+    decision_ids = [r[0] for r in result.fetchall()]
+    
+    if not decision_ids:
+        return []
+
+    stmt = (
+        select(Decision, func.count(Participant.user_id))
         .join(Participant, Decision.id == Participant.decision_id)
-        .filter(Participant.user_id == current_user.id)
+        .filter(Decision.id.in_(decision_ids))
+        .group_by(Decision.id)
     )
-    # Manual load of participant count might be needed, or we just return the objects if that suffices
-    # For now, simplest path is returning the decision list. A real DTO would map count.
-    decisions = result.scalars().all()
+    
+    result = await db.execute(stmt)
+    
     out = []
-    for d in decisions:
-        part_count = await db.execute(select(Participant).filter(Participant.decision_id == d.id))
-        count = len(part_count.scalars().all())
+    for d, count in result.all():
         out.append({"id": str(d.id), "title": d.title, "status": d.status, "participant_count": count})
     return out
 
@@ -92,11 +100,13 @@ async def update_decision(db: AsyncSession, decision_id: str, dto: UpdateDecisio
     if dto.deadline is not None:
         decision.deadline = dto.deadline
 
+    updated_fields = [k for k in dto.model_dump(exclude_unset=True).keys()]
+    
     audit = AuditLog(
         entity_id=decision.id,
         actor_id=current_user.id,
         action="DECISION_UPDATED",
-        metadata_json={}
+        metadata_json={"updated_fields": updated_fields}
     )
     db.add(audit)
     await db.commit()

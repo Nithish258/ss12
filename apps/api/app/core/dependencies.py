@@ -12,25 +12,24 @@ async def get_db():
     async with SessionLocal() as session:
         yield session
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> User:
+import uuid
+
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     try:
         payload = decode_token(token)
         user_id = payload.get("sub")
         if user_id is None:
             raise ValueError("Token missing sub")
+            
+        return User(
+            id=uuid.UUID(user_id),
+            email=payload.get("email"),
+            name=payload.get("name"),
+            role=payload.get("role")
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    result = await db.execute(select(User).filter(User.id == user_id))
-    user = result.scalars().first()
-    
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-        )
-    return user

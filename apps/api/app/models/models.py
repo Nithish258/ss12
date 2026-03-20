@@ -41,7 +41,7 @@ class Participant(Base):
     decision = relationship("Decision", back_populates="participants")
 
     __table_args__ = (
-        CheckConstraint(role.in_(["owner", "contributor", "observer"]), name="role_check"),
+        CheckConstraint("role IN ('owner', 'contributor', 'observer')", name="role_check"),
         Index("ix_participants_user_id", "user_id"),
     )
 

@@ -1,5 +1,7 @@
 pip_log.txt
 out.txt
+test_db_conn.py
+verify_audit.py
 .pytest_cache/
 __pycache__/
 *.pyc

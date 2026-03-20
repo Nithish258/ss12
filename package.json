@@ -4,11 +4,13 @@
   "private": true,
   "packageManager": "npm@11.6.2",
   "workspaces": [
-    "apps/*",
+    "apps/web",
     "packages/*"
   ],
   "scripts": {
     "dev": "turbo run dev",
+    "dev:api": "cd apps/api && .\\venv\\Scripts\\python.exe -m uvicorn app.main:app --reload --port 3001",
+    "dev:web": "cd apps/web && next dev",
     "build": "turbo run build",
     "lint": "turbo run lint"
   },

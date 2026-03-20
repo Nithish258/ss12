@@ -1,6 +1,6 @@
 # QUAICU — AI-Mediated Group Decision-Making Platform
 
-A production-ready Turborepo monorepo with a **NestJS** API backend, **Next.js 14** (App Router) frontend, and a **shared TypeScript/Zod** package.
+A production-ready Turborepo monorepo with a **Python FastAPI** API backend, **Next.js 14** (App Router) frontend, and a **shared TypeScript/Zod** package.
 
 ---
 
@@ -9,6 +9,7 @@ A production-ready Turborepo monorepo with a **NestJS** API backend, **Next.js 1
 | Tool       | Version  |
 |------------|----------|
 | Node.js    | ≥ 18.x   |
+| Python     | ≥ 3.11   |
 | npm        | ≥ 9.x    |
 | Docker     | ≥ 20.x   |
 | Docker Compose | ≥ 2.x |
@@ -21,20 +22,23 @@ A production-ready Turborepo monorepo with a **NestJS** API backend, **Next.js 1
 # 1. Clone the repo
 cd quaicu
 
-# 2. Start Postgres + Redis
+# 2. Start Postgres + Redis + API
 docker-compose up -d
 
-# 3. Install dependencies
+# 3. Install frontend dependencies
 npm install
 
-# 4. Generate Prisma client & run migration
+# 4. Initialize Python Backend & Migrations
 cd apps/api
-npx prisma generate
-npx prisma migrate dev --name init
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+alembic upgrade head
 cd ../..
 
-# 5. Start all apps (Turborepo)
-npm run dev
+# 5. Start development servers
+npm run dev:api
+npm run dev:web
 ```
 
 - **API**:  http://localhost:3001
